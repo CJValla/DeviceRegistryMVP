@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NDAA — Device Compliance Registry</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+  :root{
+    --ink:#12140f;
+    --paper:#f3f0e7;
+    --paper-2:#e9e5d8;
+    --line:#c9c3b0;
+    --line-soft:#d8d3c3;
+    --sig:#2f5d3a;        /* assurance green */
+    --sig-soft:#e2ebdf;
+    --amber:#9a6a1a;
+    --amber-soft:#f0e6cf;
+    --red:#8f3222;
+    --red-soft:#f0ddd6;
+    --muted:#6a685c;
+    --white:#fbfaf5;
+    --shadow:0 1px 0 rgba(0,0,0,.04), 0 8px 24px -18px rgba(0,0,0,.5);
+    --display:'Fraunces',Georgia,serif;
+    --body:'Inter',system-ui,sans-serif;
+    --mono:'IBM Plex Mono',monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --ink:#eceadf; --paper:#181a15; --paper-2:#20221c; --line:#33362c;
+      --line-soft:#2a2c24; --sig:#7fb389; --sig-soft:#1f2a20; --amber:#d3a44f;
+      --amber-soft:#2a2418; --red:#d98a76; --red-soft:#2c1c17; --muted:#9a988a;
+      --white:#20221c;
+      --shadow:0 1px 0 rgba(0,0,0,.2), 0 10px 30px -18px rgba(0,0,0,.8);
+    }
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{-webkit-text-size-adjust:100%}
+  body{font-family:var(--body);background:var(--paper);color:var(--ink);line-height:1.5;
+    font-size:14px;-webkit-font-smoothing:antialiased}
+
+  /* ---- Masthead ---- */
+  header{border-bottom:1.5px solid var(--ink);background:var(--paper)}
+  .mast{max-width:1180px;margin:0 auto;padding:18px 28px;display:flex;align-items:flex-end;
+    justify-content:space-between;gap:24px;flex-wrap:wrap}
+  .crest{display:flex;align-items:center;gap:14px}
+  .seal{width:42px;height:42px;border:1.5px solid var(--ink);border-radius:50%;
+    display:grid;place-items:center;font-family:var(--display);font-weight:600;font-size:15px;
+    letter-spacing:.02em;flex-shrink:0}
+  .crest h1{font-family:var(--display);font-weight:500;font-size:20px;letter-spacing:-.01em;line-height:1.1}
+  .crest .sub{font-size:11px;color:var(--muted);letter-spacing:.14em;text-transform:uppercase;margin-top:3px}
+  .mode{font-family:var(--mono);font-size:11px;color:var(--muted);text-align:right}
+  .mode .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--muted);
+    margin-right:6px;vertical-align:middle}
+  .mode.live .dot{background:var(--sig)}
+  .mode b{color:var(--ink);font-weight:500}
+
+  /* ---- Tabs ---- */
+  nav{max-width:1180px;margin:0 auto;padding:0 28px;display:flex;gap:2px;border-bottom:1px solid var(--line)}
+  .tab{appearance:none;background:none;border:none;font-family:var(--body);font-size:13px;
+    color:var(--muted);padding:13px 18px;cursor:pointer;position:relative;font-weight:500;
+    letter-spacing:.01em}
+  .tab:hover{color:var(--ink)}
+  .tab[aria-selected="true"]{color:var(--ink)}
+  .tab[aria-selected="true"]::after{content:"";position:absolute;left:12px;right:12px;bottom:-1px;
+    height:2px;background:var(--sig)}
+  .tab .count{font-family:var(--mono);font-size:11px;color:var(--white);background:var(--sig);
+    border-radius:10px;padding:1px 7px;margin-left:7px}
+
+  main{max-width:1180px;margin:0 auto;padding:28px}
+  .panel{display:none}
+  .panel.active{display:block;animation:fade .35s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+  .lead{font-family:var(--display);font-weight:400;font-size:26px;letter-spacing:-.01em;
+    line-height:1.15;margin-bottom:6px}
+  .dek{color:var(--muted);font-size:13.5px;max-width:62ch;margin-bottom:24px}
+
+  /* ---- Form ---- */
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px 20px}
+  .field{display:flex;flex-direction:column;gap:5px}
+  .field.wide{grid-column:1/-1}
+  label{font-size:12px;font-weight:500;letter-spacing:.02em}
+  label .req{color:var(--red)}
+  input,select,textarea{font-family:var(--body);font-size:13.5px;color:var(--ink);
+    background:var(--white);border:1px solid var(--line);border-radius:7px;padding:9px 11px;
+    width:100%;transition:border-color .15s,box-shadow .15s}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--sig);
+    box-shadow:0 0 0 3px var(--sig-soft)}
+  textarea{resize:vertical;min-height:64px}
+  .hint{font-size:11px;color:var(--muted)}
+  .formcard{background:var(--paper-2);border:1px solid var(--line);border-radius:12px;
+    padding:24px;box-shadow:var(--shadow);max-width:860px}
+  .formrow-actions{display:flex;gap:12px;align-items:center;margin-top:22px;flex-wrap:wrap}
+
+  .btn{appearance:none;font-family:var(--body);font-weight:500;font-size:13.5px;cursor:pointer;
+    border-radius:7px;padding:10px 20px;border:1px solid transparent;transition:.15s}
+  .btn.primary{background:var(--sig);color:#fff;border-color:var(--sig)}
+  .btn.primary:hover{filter:brightness(1.08)}
+  .btn.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+  .btn.ghost:hover{background:var(--paper-2)}
+  .btn.sm{padding:6px 13px;font-size:12.5px}
+  .btn.approve{background:var(--sig);color:#fff}
+  .btn.reject{background:var(--red);color:#fff}
+  .btn.info{background:var(--amber);color:#fff}
+  .btn:disabled{opacity:.4;cursor:not-allowed}
+
+  /* ---- Queue ---- */
+  .split{display:grid;grid-template-columns:minmax(340px,1fr) minmax(420px,1.15fr);gap:22px;align-items:start}
+  @media(max-width:900px){.split{grid-template-columns:1fr}}
+  .queue{display:flex;flex-direction:column;gap:10px}
+  .qcard{background:var(--white);border:1px solid var(--line);border-left-width:3px;border-radius:9px;
+    padding:13px 15px;cursor:pointer;transition:.15s;position:relative}
+  .qcard:hover{border-color:var(--sig);transform:translateX(2px)}
+  .qcard.sel{border-color:var(--sig);box-shadow:0 0 0 3px var(--sig-soft)}
+  .qcard.band-High{border-left-color:var(--red)}
+  .qcard.band-Medium{border-left-color:var(--amber)}
+  .qcard.band-Low{border-left-color:var(--sig)}
+  .qtop{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+  .qref{font-family:var(--mono);font-size:12px;color:var(--muted)}
+  .qmodel{font-family:var(--display);font-size:16px;font-weight:500;margin:3px 0 8px}
+  .qmeta{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .chip{font-size:11px;font-family:var(--mono);padding:2px 8px;border-radius:20px;border:1px solid var(--line)}
+  .chip.rec{border:none;color:#fff}
+  .chip.rec.Auto-Approve{background:var(--sig)}
+  .chip.rec.Refer{background:var(--amber)}
+  .chip.rec.Return{background:var(--red)}
+  .band{font-size:11px;font-weight:600;letter-spacing:.03em;text-transform:uppercase}
+  .band.High{color:var(--red)}.band.Medium{color:var(--amber)}.band.Low{color:var(--sig)}
+  .empty{border:1px dashed var(--line);border-radius:9px;padding:34px;text-align:center;color:var(--muted);font-size:13px}
+
+  /* ---- Glass box ---- */
+  .glass{background:var(--paper-2);border:1px solid var(--line);border-radius:12px;position:sticky;top:16px;
+    box-shadow:var(--shadow);overflow:hidden}
+  .glass-h{padding:16px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;
+    justify-content:space-between;gap:10px}
+  .glass-h .eyebrow{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+  .glass-h h3{font-family:var(--display);font-weight:500;font-size:18px}
+  .glass-body{padding:18px}
+  .glass-empty{padding:48px 24px;text-align:center;color:var(--muted);font-size:13px}
+  .gauge-row{display:flex;gap:16px;align-items:center;margin-bottom:16px}
+  .score{width:82px;height:82px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;
+    position:relative;background:conic-gradient(var(--gc) calc(var(--p)*1%), var(--paper) 0)}
+  .score::before{content:"";position:absolute;inset:8px;border-radius:50%;background:var(--paper-2)}
+  .score .val{position:relative;font-family:var(--display);font-size:24px;font-weight:600}
+  .gauge-meta .band{font-size:13px}
+  .gauge-meta .conf{font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:4px}
+  .conf-bar{height:5px;background:var(--paper);border-radius:3px;margin-top:6px;overflow:hidden;width:150px}
+  .conf-bar i{display:block;height:100%;background:var(--sig)}
+  .conf-bar.low i{background:var(--amber)}
+  .reason{background:var(--white);border:1px solid var(--line-soft);border-radius:8px;padding:12px 14px;
+    font-size:13px;line-height:1.55;margin-bottom:16px}
+  .reason .lbl{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);
+    display:block;margin-bottom:6px}
+  .flags{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
+  .flag{display:flex;gap:10px;align-items:flex-start;font-size:12.5px;padding:9px 11px;border-radius:7px;
+    background:var(--white);border:1px solid var(--line-soft)}
+  .flag .sev{font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;
+    padding:2px 6px;border-radius:4px;flex-shrink:0;margin-top:1px}
+  .flag .sev.critical{background:var(--red-soft);color:var(--red)}
+  .flag .sev.warning{background:var(--amber-soft);color:var(--amber)}
+  .flag .sev.info{background:var(--sig-soft);color:var(--sig)}
+  .flag .fdetail{color:var(--muted)}
+  .flag .ffield{font-family:var(--mono);font-size:11px}
+  .gate{border-top:1px dashed var(--line);padding-top:14px;margin-bottom:16px}
+  .gate .lbl{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+  .gate ul{list-style:none;display:flex;flex-direction:column;gap:5px}
+  .gate li{font-size:12px;display:flex;gap:8px;align-items:center;font-family:var(--mono)}
+  .gate .tick{width:15px;text-align:center}
+  .gate .pass{color:var(--sig)}.gate .fail{color:var(--red)}
+  .verdict{border-radius:8px;padding:12px 14px;font-size:13px;font-weight:500;display:flex;
+    align-items:center;gap:10px}
+  .verdict.auto{background:var(--sig-soft);color:var(--sig)}
+  .verdict.human{background:var(--amber-soft);color:var(--amber)}
+  .decide{display:flex;gap:9px;margin-top:16px;flex-wrap:wrap}
+  .provenance{font-family:var(--mono);font-size:10.5px;color:var(--muted);margin-top:14px;
+    padding-top:12px;border-top:1px solid var(--line-soft);line-height:1.7}
+
+  /* ---- Dashboard ---- */
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:26px}
+  .stat{background:var(--paper-2);border:1px solid var(--line);border-radius:11px;padding:16px 17px;box-shadow:var(--shadow)}
+  .stat .k{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+  .stat .v{font-family:var(--display);font-size:30px;font-weight:500;margin-top:6px;line-height:1}
+  .stat .u{font-size:12px;color:var(--muted);margin-top:3px}
+  .barwrap{background:var(--paper-2);border:1px solid var(--line);border-radius:11px;padding:18px 20px;
+    box-shadow:var(--shadow);margin-bottom:26px}
+  .barwrap h4{font-family:var(--display);font-weight:500;font-size:16px;margin-bottom:14px}
+  .splitbar{height:26px;border-radius:6px;overflow:hidden;display:flex;font-family:var(--mono);font-size:11px;color:#fff}
+  .splitbar .auto{background:var(--sig);display:grid;place-items:center}
+  .splitbar .human{background:var(--amber);display:grid;place-items:center}
+  .legend{display:flex;gap:18px;margin-top:12px;font-size:12px;color:var(--muted)}
+  .legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:middle}
+
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  .tablewrap{background:var(--paper-2);border:1px solid var(--line);border-radius:11px;overflow:hidden;box-shadow:var(--shadow)}
+  .tablewrap h4{font-family:var(--display);font-weight:500;font-size:16px;padding:16px 18px 0}
+  .tablescroll{overflow-x:auto;padding:12px 6px 6px}
+  th,td{text-align:left;padding:8px 12px;border-bottom:1px solid var(--line-soft);white-space:nowrap}
+  th{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+  td .mono{font-family:var(--mono)}
+  td .actor{font-family:var(--mono);font-size:11px}
+  .evt{font-family:var(--mono);font-size:11px;padding:2px 7px;border-radius:5px;background:var(--white);border:1px solid var(--line-soft)}
+  .atype{font-size:10px;letter-spacing:.05em;text-transform:uppercase;padding:1px 6px;border-radius:4px}
+  .atype.System{background:var(--paper);color:var(--muted)}
+  .atype.AIModel{background:var(--sig-soft);color:var(--sig)}
+  .atype.Human{background:var(--amber-soft);color:var(--amber)}
+
+  .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(120%);
+    background:var(--ink);color:var(--paper);padding:12px 20px;border-radius:9px;font-size:13px;
+    box-shadow:0 10px 30px -10px rgba(0,0,0,.6);transition:transform .3s ease;z-index:50;
+    display:flex;align-items:center;gap:10px}
+  .toast.show{transform:translateX(-50%) translateY(0)}
+  .toast .tdot{width:8px;height:8px;border-radius:50%;background:var(--sig)}
+
+  .keyrow{display:flex;gap:10px;align-items:center;margin-bottom:20px;flex-wrap:wrap;
+    background:var(--paper-2);border:1px solid var(--line);border-radius:9px;padding:11px 14px}
+  .keyrow input{max-width:280px;font-family:var(--mono);font-size:12px}
+  .keyrow .kl{font-size:12px;color:var(--muted)}
+  .seedbtn{margin-left:auto}
+
+  @media(max-width:620px){
+    .grid2{grid-template-columns:1fr}
+    .mast{padding:14px 18px}
+    nav,main{padding-left:16px;padding-right:16px}
+  }
+  .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+  *:focus-visible{outline:2px solid var(--sig);outline-offset:2px}
+  @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <div class="mast">
+    <div class="crest">
+      <div class="seal">Nd</div>
+      <div>
+        <h1>Device Compliance Registry</h1>
+        <div class="sub">National Device Assurance Agency</div>
+      </div>
+    </div>
+  </div>
+  <nav role="tablist" aria-label="Sections">
+    <button class="tab" role="tab" aria-selected="true" data-panel="submit">Submit registration</button>
+    <button class="tab" role="tab" aria-selected="false" data-panel="queue">Assessor queue <span class="count" id="queueCount">0</span></button>
+    <button class="tab" role="tab" aria-selected="false" data-panel="dash">Assurance dashboard</button>
+  </nav>
+</header>
+
+<main>
+  <!-- SUBMIT -->
+  <section class="panel active" id="panel-submit" role="tabpanel">
+    <h2 class="lead">Register a device</h2>
+    <p class="dek">Complete form details and submit.</p>
+
+    <div class="keyrow">
+      <span class="kl">AI key (optional):</span>
+      <input type="password" id="apiKey" placeholder="sk-…" autocomplete="off">
+      <button class="btn ghost sm" id="saveKey">Use key</button>
+      <button class="btn ghost sm seedbtn" id="seedBtn">Load 5 sample applications</button>
+    </div>
+
+    <form class="formcard" id="regForm">
+      <div class="grid2">
+        <div class="field"><label>Application reference <span class="req">*</span></label><input name="ref" required placeholder="REG-2026-004187"></div>
+        <div class="field"><label>Device type <span class="req">*</span></label>
+          <select name="deviceType" required>
+            <option value="Home Battery Inverter">Home Battery Inverter</option>
+            <option value="Hybrid Inverter">Hybrid Inverter</option>
+            <option value="EV Charger">EV Charger</option>
+            <option value="Smart Meter Gateway">Smart Meter Gateway</option>
+            <option value="Other">Other</option>
+          </select></div>
+        <div class="field"><label>Manufacturer name <span class="req">*</span></label><input name="manuName" required placeholder="Helion Power Systems"></div>
+        <div class="field"><label>Manufacturer ID <span class="req">*</span></label><input name="manuId" required placeholder="MFR-1001" list="manuList">
+          <datalist id="manuList"></datalist></div>
+        <div class="field"><label>Model name <span class="req">*</span></label><input name="model" required placeholder="Helion HX-5"></div>
+        <div class="field"><label>Rated power (kW)</label><input name="power" type="number" step="0.1" placeholder="5.0"></div>
+        <div class="field"><label>Compliance cert ref</label><input name="cert" placeholder="CERT-88231"></div>
+        <div class="field"><label>Cert expiry date</label><input name="certExp" type="date"></div>
+        <div class="field"><label>Test report ref</label><input name="testRep" placeholder="TR-55120"></div>
+        <div class="field wide" style="flex-direction:row;align-items:center;gap:10px">
+          <input type="checkbox" name="safety" id="safety" style="width:auto" checked>
+          <label for="safety" style="margin:0">Safety attestation signed</label>
+        </div>
+        <div class="field wide"><label>Declared standards</label><textarea name="standards" placeholder="AS/NZS 4777.2; IEC 62109"></textarea></div>
+      </div>
+      <div class="formrow-actions">
+        <button type="submit" class="btn primary" id="submitBtn">Submit for triage</button>
+        <span class="hint" id="formHint">The AI recommends; a rules gate and, where needed, a human assessor decide.</span>
+      </div>
+    </form>
+  </section>
+
+  <!-- QUEUE -->
+  <section class="panel" id="panel-queue" role="tabpanel">
+    <h2 class="lead">Assessor queue</h2>
+    <p class="dek">Applications the gate routed to a human. You are the decision-maker — the panel on the right shows the AI's recommendation, its reasoning, the exact gate logic, and full provenance. Approve, reject, or return for information.</p>
+    <div class="split">
+      <div class="queue" id="queueList"></div>
+      <aside class="glass" id="glass">
+        <div class="glass-empty">Select an application to see the assessment.</div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- DASHBOARD -->
+  <section class="panel" id="panel-dash" role="tabpanel">
+    <h2 class="lead">Assurance dashboard</h2>
+    <p class="dek">Every triage and decision, measured. Auto-approval and override rates are the dials you watch for drift; the audit trail below is append-only and attributes every step to a system process, a named model, or a named human.</p>
+    <div class="cards" id="statCards"></div>
+    <div class="barwrap">
+      <h4>Routing split</h4>
+      <div class="splitbar" id="splitBar"></div>
+      <div class="legend"><span><i style="background:var(--sig)"></i>Auto-approved</span><span><i style="background:var(--amber)"></i>Routed to human</span></div>
+    </div>
+    <div class="tablewrap">
+      <h4>Audit trail</h4>
+      <div class="tablescroll">
+        <table id="auditTable">
+          <thead><tr><th>Time (UTC)</th><th>Application</th><th>Event</th><th>Actor</th><th>Type</th><th>Detail</th></tr></thead>
+          <tbody id="auditBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div class="toast" id="toast"><span class="tdot"></span><span id="toastMsg"></span></div>
+
+<script>
+//=================== STATE ===================
+const CONF_GATE = 0.75;
+let apiKey = "";
+const manufacturers = {
+  "MFR-1001":{name:"Helion Power Systems",priorReg:42,incidents:0,rejections:1,watchlist:false},
+  "MFR-1002":{name:"Voltaic Home Energy",priorReg:18,incidents:0,rejections:0,watchlist:false},
+  "MFR-1003":{name:"Redback Cells Pty Ltd",priorReg:7,incidents:2,rejections:3,watchlist:true},
+  "MFR-1004":{name:"Auralis Grid",priorReg:1,incidents:0,rejections:0,watchlist:false},
+  "MFR-1005":{name:"Kestrel Inverters",priorReg:65,incidents:1,rejections:2,watchlist:false},
+};
+const apps = [];      // {ref, ...fields, ai:{...}, routing, humanDecision, override}
+const audit = [];     // {ts, ref, type, actor, actorType, detail}
+let selectedRef = null;
+
+//=================== HELPERS ===================
+const $ = s=>document.querySelector(s);
+const $$ = s=>[...document.querySelectorAll(s)];
+const nowUtc = ()=>new Date().toISOString().replace('T',' ').slice(0,19);
+function toast(msg){const t=$("#toast");$("#toastMsg").textContent=msg;t.classList.add("show");
+  setTimeout(()=>t.classList.remove("show"),2600);}
+function logAudit(ref,type,actor,actorType,detail){audit.unshift({ts:nowUtc(),ref,type,actor,actorType,detail});}
+
+// populate manufacturer datalist
+const dl=$("#manuList");
+Object.entries(manufacturers).forEach(([id,m])=>{const o=document.createElement("option");o.value=id;o.label=m.name;dl.appendChild(o);});
+
+//=================== MOCK AI (deterministic) ===================
+function mockTriage(a){
+  const m = manufacturers[a.manuId] || {name:a.manuName,priorReg:0,incidents:0,rejections:0,watchlist:false};
+  const flags=[]; let score=8;
+  const today=new Date();
+  // cert
+  if(!a.cert){flags.push({code:"CERT_MISSING",severity:"critical",field:"complianceCertRef",detail:"No compliance certificate reference provided."});score+=32;}
+  else if(a.certExp){
+    const exp=new Date(a.certExp); const days=(exp-today)/86400000;
+    if(days<0){flags.push({code:"CERT_EXPIRED",severity:"critical",field:"certExpiryDate",detail:`Certificate expired ${Math.abs(Math.round(days))} days ago.`});score+=34;}
+    else if(days<30){flags.push({code:"CERT_EXPIRING",severity:"warning",field:"certExpiryDate",detail:`Certificate expires in ${Math.round(days)} days.`});score+=12;}
+  }
+  // safety
+  if(!a.safety){flags.push({code:"NO_SAFETY_ATTESTATION",severity:"critical",field:"safetyAttestation",detail:"Safety attestation is not signed."});score+=30;}
+  // test report
+  if(!a.testRep){flags.push({code:"MISSING_TESTREPORT",severity:"warning",field:"testReportRef",detail:"No test report reference supplied."});score+=14;}
+  // novel
+  if(a.deviceType==="Other"){flags.push({code:"NOVEL_DEVICE",severity:"warning",field:"deviceType",detail:"Device type is 'Other' — outside standard categories."});score+=16;}
+  // manufacturer
+  if(m.watchlist){flags.push({code:"MANUFACTURER_WATCHLIST",severity:"warning",field:"onWatchlist",detail:`Manufacturer on watchlist; ${m.incidents} prior incident(s).`});score+=18;}
+  else if(m.incidents>0){flags.push({code:"MANUFACTURER_INCIDENTS",severity:"info",field:"priorIncidents",detail:`${m.incidents} prior incident(s) on file.`});score+=6;}
+  // standards sanity
+  if(!a.standards || a.standards.trim()==="" || a.standards.includes("unspecified")){flags.push({code:"INCOMPLETE",severity:"warning",field:"declaredStandards",detail:"Declared standards missing or unspecified."});score+=10;}
+
+  score=Math.min(score,96);
+  const band = score>=55?"High":score>=25?"Medium":"Low";
+  const hasCritical = flags.some(f=>f.severity==="critical");
+  const novelOrFirst = a.deviceType==="Other" || m.priorReg<=1;
+
+  // confidence: lower when novel / first-time / missing data
+  let confidence=0.92;
+  if(novelOrFirst) confidence-=0.20;
+  if(flags.some(f=>f.code==="MISSING_TESTREPORT")) confidence-=0.08;
+  if(band==="Medium") confidence-=0.05;
+  confidence=Math.max(0.55,Math.min(0.95,confidence));
+
+  let recommendation, reasoning;
+  if(hasCritical){
+    recommendation="Refer to Human";
+    reasoning=`${flags.filter(f=>f.severity==='critical').map(f=>f.detail).join(' ')} A human should confirm the position before any approval; this is referred rather than auto-rejected.`;
+  } else if(confidence<CONF_GATE || novelOrFirst){
+    recommendation="Refer to Human";
+    reasoning=`Application is not clearly routine — ${novelOrFirst?'a novel device type or first-time manufacturer':'lower confidence in the available data'} warrants human review. No critical safety issue was detected.`;
+  } else if(band==="Low"){
+    recommendation="Auto-Approve";
+    reasoning=`Valid certificate, safety attestation signed, declared standards consistent with a ${a.power||'—'}kW ${a.deviceType.toLowerCase()}, and ${m.name} has ${m.priorReg} prior registrations with ${m.incidents} incidents. All required fields present.`;
+  } else {
+    recommendation="Refer to Human";
+    reasoning=`Elevated risk indicators without a critical failure — referred for a human view. See flags.`;
+  }
+  return {riskScore:score,riskBand:band,confidence:+confidence.toFixed(2),recommendation,reasoning,flags,
+    model:"mock-triage@local",promptVersion:"v1.2"};
+}
+
+//=================== REAL AI (if key present) ===================
+async function realTriage(a){
+  const m = manufacturers[a.manuId] || {name:a.manuName,priorReg:0,incidents:0,rejections:0,watchlist:false};
+  const sys=`You are a triage assistant for the National Device Assurance Agency, a regulator registering grid-connected consumer energy devices. You produce a RISK TRIAGE RECOMMENDATION for a human assessor — you do not make final decisions. Assess: certificate presence/expiry, safety attestation, internal consistency, manufacturer track record, novelty, completeness. Rules: output confidence 0..1; if confidence<0.75 you MUST recommend "Refer to Human"; if any safety/critical flag exists you MUST recommend "Refer to Human"; only recommend "Auto-Approve" when risk is Low, confidence>=0.75, no critical flags, nothing missing. Every flag must name the field it is based on. Return ONLY valid JSON: {"riskScore":int,"riskBand":"Low|Medium|High","confidence":number,"recommendation":"Auto-Approve|Refer to Human|Return for Info","reasoning":string,"flags":[{"code":string,"severity":"info|warning|critical","field":string,"detail":string}]}`;
+  const usr=`APPLICATION:\n${JSON.stringify(a,null,1)}\nMANUFACTURER HISTORY:\n${JSON.stringify(m,null,1)}\nTODAY: ${new Date().toISOString().slice(0,10)}`;
+  const res=await fetch("https://api.openai.com/v1/chat/completions",{
+    method:"POST",headers:{"Content-Type":"application/json","Authorization":`Bearer ${apiKey}`},
+    body:JSON.stringify({model:"gpt-4o-mini",temperature:0.2,messages:[{role:"system",content:sys},{role:"user",content:usr}]})
+  });
+  if(!res.ok) throw new Error("API "+res.status);
+  const data=await res.json();
+  let txt=data.choices[0].message.content.trim().replace(/^```json/,"").replace(/```$/,"").trim();
+  const j=JSON.parse(txt);
+  j.model="gpt-4o-mini"; j.promptVersion="v1.2";
+  return j;
+}
+
+//=================== GATE ===================
+function routingGate(ai){
+  const noCritical = !ai.flags.some(f=>f.severity==="critical");
+  const pass = ai.recommendation==="Auto-Approve" && ai.confidence>=CONF_GATE && ai.riskBand==="Low" && noCritical;
+  return {
+    auto: pass,
+    checks:[
+      {label:`model recommends auto-approve`,ok:ai.recommendation==="Auto-Approve"},
+      {label:`confidence ≥ ${CONF_GATE}  (${ai.confidence})`,ok:ai.confidence>=CONF_GATE},
+      {label:`risk band = Low  (${ai.riskBand})`,ok:ai.riskBand==="Low"},
+      {label:`zero critical flags`,ok:noCritical},
+    ]
+  };
+}
+
+//=================== SUBMIT PIPELINE ===================
+// Server endpoint. When set, triage and the routing decision are performed
+// server-side by the Worker, which is the authority. The browser only renders
+// the returned decision. Leave blank to run the local engine offline.
+const TRIAGE_ENDPOINT = "";
+
+// Call the Worker. Maps the server response into the shape the UI renders.
+async function serverTriage(a){
+  const res = await fetch(TRIAGE_ENDPOINT,{
+    method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(a)
+  });
+  if(!res.ok) throw new Error("Triage service "+res.status);
+  const data = await res.json();
+  const s = data.assessment;
+  if(!s) throw new Error("Malformed triage response");
+  return {
+    ai:{riskScore:s.riskScore,riskBand:s.riskBand,confidence:s.confidence,
+        recommendation:s.recommendation,reasoning:s.reasoning,flags:s.flags||[],
+        model:s.meta&&s.meta.model,promptVersion:"server"},
+    gate:{auto:s.routing.auto,checks:s.routing.checks},
+  };
+}
+
+async function triageApp(a){
+  logAudit(a.ref,"Submitted","system:flow","System","Application received.");
+  let ai, gate, serverSide=false;
+  if(TRIAGE_ENDPOINT){
+    try{
+      const r = await serverTriage(a);
+      ai = r.ai; gate = r.gate; serverSide = true;
+    }catch(e){
+      ai = mockTriage(a); gate = routingGate(ai);
+      toast("Triage service unavailable, used local engine. "+e.message);
+    }
+  } else {
+    ai = mockTriage(a); gate = routingGate(ai);
+  }
+  a.ai=ai; a.gate=gate;
+  logAudit(a.ref,"AITriageCompleted",`model:${ai.model}`,"AIModel",`Risk ${ai.riskBand} (${ai.riskScore}), confidence ${ai.confidence}, rec: ${ai.recommendation}.`);
+  logAudit(a.ref,"RoutingDecision",serverSide?"service:triage":"system:flow","System",`Routing decided ${serverSide?"server-side":"locally"}: ${gate.auto?"auto-approve":"refer to human"}.`);
+  if(gate.auto){
+    a.routing="Auto-Approved"; a.status="Auto-Approved"; a.humanDecision="Not Required";
+    logAudit(a.ref,"RoutedAutoApprove","system:flow","System","Routing rules passed, auto-approved, manufacturer notified.");
+  } else {
+    a.routing="Routed to Human"; a.status="Awaiting Human Review";
+    logAudit(a.ref,"RoutedToHuman","system:flow","System","Routing rules withheld auto-approval, routed to assessor.");
+  }
+  return a;
+}
+
+//=================== RENDER ===================
+function recClass(r){return r==="Auto-Approve"?"Auto-Approve":r==="Return for Info"?"Return":"Refer";}
+function renderQueue(){
+  const list=$("#queueList");
+  const q=apps.filter(a=>a.routing==="Routed to Human" && !a.humanDecision);
+  $("#queueCount").textContent=q.length;
+  if(!q.length){list.innerHTML=`<div class="empty">No applications awaiting review.<br>Submit one, or load the samples on the Submit tab.</div>`;
+    if(selectedRef && !apps.find(a=>a.ref===selectedRef && !a.humanDecision)) renderGlass(null);
+    return;}
+  list.innerHTML=q.map(a=>`
+    <div class="qcard band-${a.ai.riskBand} ${a.ref===selectedRef?'sel':''}" data-ref="${a.ref}">
+      <div class="qtop"><span class="qref">${a.ref}</span><span class="band ${a.ai.riskBand}">${a.ai.riskBand} risk</span></div>
+      <div class="qmodel">${a.model||'—'}</div>
+      <div class="qmeta">
+        <span class="chip">${a.deviceType}</span>
+        <span class="chip rec ${recClass(a.ai.recommendation)}">${a.ai.recommendation}</span>
+        <span class="chip">conf ${a.ai.confidence}</span>
+      </div>
+    </div>`).join("");
+  $$("#queueList .qcard").forEach(c=>c.onclick=()=>{selectedRef=c.dataset.ref;renderQueue();renderGlass(apps.find(a=>a.ref===selectedRef));});
+}
+
+function renderGlass(a){
+  const g=$("#glass");
+  if(!a){g.innerHTML=`<div class="glass-empty">Select an application to see the assessment.</div>`;return;}
+  const ai=a.ai, gate=a.gate;
+  const gc = ai.riskBand==="High"?"var(--red)":ai.riskBand==="Medium"?"var(--amber)":"var(--sig)";
+  const flagsHtml = ai.flags.length? ai.flags.map(f=>`
+    <div class="flag"><span class="sev ${f.severity}">${f.severity}</span>
+      <div><div>${f.detail}</div><span class="ffield">field: ${f.field}</span></div></div>`).join("")
+    : `<div class="flag"><span class="sev info">clear</span><div>No flags raised.</div></div>`;
+  const gateHtml = gate.checks.map(c=>`<li><span class="tick ${c.ok?'pass':'fail'}">${c.ok?'✓':'✕'}</span><span class="${c.ok?'pass':'fail'}">${c.label}</span></li>`).join("");
+  g.innerHTML=`
+    <div class="glass-h"><div><div class="eyebrow">Assessment · ${a.ref}</div><h3>${a.model||'—'}</h3></div></div>
+    <div class="glass-body">
+      <div class="gauge-row">
+        <div class="score" style="--p:${ai.riskScore};--gc:${gc}"><span class="val">${ai.riskScore}</span></div>
+        <div class="gauge-meta">
+          <div class="band ${ai.riskBand}" style="font-weight:600">${ai.riskBand} risk</div>
+          <div class="conf">confidence ${ai.confidence}</div>
+          <div class="conf-bar ${ai.confidence<CONF_GATE?'low':''}"><i style="width:${ai.confidence*100}%"></i></div>
+        </div>
+      </div>
+      <div class="reason"><span class="lbl">Why this recommendation</span>${ai.reasoning}</div>
+      <div class="flags">${flagsHtml}</div>
+      <div class="gate"><div class="lbl">Auto-approve gate — all must pass</div><ul>${gateHtml}</ul></div>
+      <div class="verdict ${gate.auto?'auto':'human'}">${gate.auto?'✓ Would auto-approve':'⇢ Routed to human — you decide'}</div>
+      <div class="decide">
+        <button class="btn approve sm" data-act="Approved">Approve</button>
+        <button class="btn reject sm" data-act="Rejected">Reject</button>
+        <button class="btn info sm" data-act="Returned for Info">Return for info</button>
+      </div>
+      <div class="provenance">model: ${ai.model} · prompt: ${ai.promptVersion}<br>recommendation is advisory — the decision and this record are yours</div>
+    </div>`;
+  $$("#glass .decide button").forEach(b=>b.onclick=()=>decide(a,b.dataset.act));
+}
+
+function decide(a,act){
+  a.humanDecision=act; a.status=act;
+  const recMap={"Auto-Approve":"Approved","Refer to Human":null,"Return for Info":"Returned for Info"};
+  a.override = (recMap[a.ai.recommendation]||"Approved")!==act && a.ai.recommendation!=="Refer to Human"
+    ? true
+    : (a.ai.recommendation==="Refer to Human" ? false : (recMap[a.ai.recommendation]!==act));
+  // simpler, honest override: did the human's action differ from what the AI leaned toward?
+  const aiLean = a.ai.recommendation==="Auto-Approve"?"Approved":(a.ai.recommendation==="Return for Info"?"Returned for Info":"(defer)");
+  a.override = aiLean!=="(defer)" && aiLean!==act;
+  logAudit(a.ref,"HumanDecisionRecorded","assessor@ndaa.gov.au (demo)","Human",`${act}${a.override?' — overrode AI lean':''}.`);
+  toast(`${a.ref} — ${act}`);
+  selectedRef=null;
+  renderQueue(); renderGlass(null); renderDash();
+}
+
+function renderDash(){
+  const total=apps.length;
+  const auto=apps.filter(a=>a.routing==="Auto-Approved").length;
+  const routed=apps.filter(a=>a.routing==="Routed to Human").length;
+  const decided=apps.filter(a=>a.humanDecision && a.humanDecision!=="Not Required");
+  const overrides=decided.filter(a=>a.override).length;
+  const risky=decided.filter(a=>["Rejected","Returned for Info"].includes(a.humanDecision)).length;
+  const autoRate=total?Math.round(auto/total*100):0;
+  const overrideRate=decided.length?Math.round(overrides/decided.length*100):0;
+  const catchRate=routed?Math.round(risky/routed*100):0;
+  const cards=[
+    {k:"Applications",v:total,u:"submitted"},
+    {k:"Auto-approval rate",v:autoRate+"%",u:`${auto} of ${total}`},
+    {k:"Est. hours saved",v:(auto*0.25).toFixed(2),u:"@15 min/routine case"},
+    {k:"Human-confirmed risk",v:catchRate+"%",u:`${risky} of ${routed} routed`},
+    {k:"Override rate",v:overrideRate+"%",u:`${overrides} of ${decided.length||0} decided`},
+  ];
+  $("#statCards").innerHTML=cards.map(c=>`<div class="stat"><div class="k">${c.k}</div><div class="v">${c.v}</div><div class="u">${c.u}</div></div>`).join("");
+  const ap=total?auto/total*100:0, hp=100-ap;
+  $("#splitBar").innerHTML = total?
+     `<div class="auto" style="width:${ap}%">${auto?auto+' auto':''}</div><div class="human" style="width:${hp}%">${routed?routed+' human':''}</div>`
+     : `<div class="human" style="width:100%;background:var(--paper);color:var(--muted)">No data yet</div>`;
+  $("#auditBody").innerHTML = audit.length? audit.map(e=>`
+    <tr><td class="mono">${e.ts}</td><td class="mono">${e.ref}</td>
+      <td><span class="evt">${e.type}</span></td><td class="actor">${e.actor}</td>
+      <td><span class="atype ${e.actorType}">${e.actorType}</span></td><td>${e.detail}</td></tr>`).join("")
+    : `<tr><td colspan="6" style="color:var(--muted);padding:20px">No events yet.</td></tr>`;
+}
+
+//=================== TABS ===================
+$$(".tab").forEach(t=>t.onclick=()=>{
+  $$(".tab").forEach(x=>x.setAttribute("aria-selected","false"));
+  t.setAttribute("aria-selected","true");
+  $$(".panel").forEach(p=>p.classList.remove("active"));
+  $("#panel-"+t.dataset.panel).classList.add("active");
+  if(t.dataset.panel==="dash") renderDash();
+  if(t.dataset.panel==="queue") renderQueue();
+});
+
+//=================== FORM ===================
+$("#regForm").onsubmit=async e=>{
+  e.preventDefault();
+  const f=e.target, btn=$("#submitBtn");
+  const a={
+    ref:f.ref.value.trim(), deviceType:f.deviceType.value, manuName:f.manuName.value.trim(),
+    manuId:f.manuId.value.trim(), model:f.model.value.trim(),
+    power:f.power.value, cert:f.cert.value.trim(), certExp:f.certExp.value,
+    testRep:f.testRep.value.trim(), safety:f.safety.checked, standards:f.standards.value.trim()
+  };
+  if(apps.find(x=>x.ref===a.ref)){toast("That reference already exists.");return;}
+  btn.disabled=true; btn.textContent="Triaging…";
+  await triageApp(a);
+  apps.push(a);
+  btn.disabled=false; btn.textContent="Submit for triage";
+  f.reset();
+  const routed = a.routing==="Routed to Human";
+  toast(`${a.ref} — ${routed?'routed to assessor':'auto-approved'} (${a.ai.riskBand} risk)`);
+  renderQueue(); renderDash();
+  if(routed){ $$(".tab").find(t=>t.dataset.panel==="queue").click(); selectedRef=a.ref; renderQueue(); renderGlass(a); }
+};
+
+//=================== KEY + SEED ===================
+$("#saveKey").onclick=()=>{
+  apiKey=$("#apiKey").value.trim();
+  toast(apiKey ? "Live AI enabled." : "AI key cleared.");
+};
+
+const SEED=[
+  {ref:"REG-2026-004182",deviceType:"Home Battery Inverter",manuId:"MFR-1001",manuName:"Helion Power Systems",model:"Helion HX-5",fw:"3.4.1",power:"5.0",cert:"CERT-88231",certExp:"2027-06-30",testRep:"TR-55120",safety:true,standards:"AS/NZS 4777.2; IEC 62109"},
+  {ref:"REG-2026-004183",deviceType:"Hybrid Inverter",manuId:"MFR-1003",manuName:"Redback Cells Pty Ltd",model:"Redback RB-Hybrid 8",fw:"1.0.0",power:"8.0",cert:"CERT-71004",certExp:"2026-07-22",testRep:"TR-40911",safety:true,standards:"AS/NZS 4777.2"},
+  {ref:"REG-2026-004184",deviceType:"EV Charger",manuId:"MFR-1002",manuName:"Voltaic Home Energy",model:"Voltaic VC-Wall 7",fw:"2.2.0",power:"7.4",cert:"CERT-90210",certExp:"2028-01-15",testRep:"TR-61220",safety:false,standards:"IEC 61851"},
+  {ref:"REG-2026-004185",deviceType:"Other",manuId:"MFR-1004",manuName:"Auralis Grid",model:"Auralis GridNode",fw:"0.9-beta",power:"3.0",cert:"CERT-10002",certExp:"2027-11-01",testRep:"",safety:true,standards:"(unspecified)"},
+  {ref:"REG-2026-004186",deviceType:"Home Battery Inverter",manuId:"MFR-1005",manuName:"Kestrel Inverters",model:"Kestrel K-10",fw:"5.1.0",power:"10.0",cert:"CERT-33450",certExp:"2027-09-30",testRep:"TR-77820",safety:true,standards:"AS/NZS 4777.2; IEC 62109"},
+];
+$("#seedBtn").onclick=async()=>{
+  const btn=$("#seedBtn"); btn.disabled=true; btn.textContent="Triaging samples…";
+  for(const s of SEED){
+    if(apps.find(x=>x.ref===s.ref)) continue;
+    const a={...s};
+    await triageApp(a);
+    apps.push(a);
+  }
+  btn.disabled=false; btn.textContent="Load 5 sample applications";
+  renderQueue(); renderDash();
+  const auto=apps.filter(a=>a.routing==="Auto-Approved").length;
+  const routed=apps.filter(a=>a.routing==="Routed to Human").length;
+  toast(`Samples triaged — ${auto} auto-approved, ${routed} routed.`);
+  $$(".tab").find(t=>t.dataset.panel==="queue").click();
+};
+
+renderDash(); renderQueue();
+</script>
+</body>
+</html>

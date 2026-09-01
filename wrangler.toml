@@ -1,0 +1,12 @@
+name = "ndaa-triage"
+main = "src/index.js"
+compatibility_date = "2026-08-09"
+
+# Cloudflare Workers AI binding. Runs the model on Cloudflare; no API key.
+[ai]
+binding = "AI"
+
+[vars]
+# Set to the deployed prototype's origin in production, e.g.
+# ALLOWED_ORIGIN = "https://ndaa-device-compliance-registry.pages.dev"
+ALLOWED_ORIGIN = "*"
